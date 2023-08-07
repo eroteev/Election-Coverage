@@ -101,4 +101,8 @@ describe("USElection", function () {
       "The election has ended already"
     );
   });
+
+  it("Should throw on trying to end election more than once", async function () {
+    await expect(usElection.endElection()).to.be.revertedWith("The election has ended already");
+  });
 });
