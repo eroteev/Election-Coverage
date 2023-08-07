@@ -1,5 +1,4 @@
-import { USElection__factory } from "../typechain-types/factories/Election.sol/USElection__factory";
-import { USElection } from "../typechain-types/Election.sol/USElection";
+import { USElection } from "../typechain-types/USElection"
 import { expect } from "chai";
 import { ethers } from "hardhat";
 
@@ -38,9 +37,39 @@ describe("USElection", function () {
   it("Should throw when try to submit already submitted state results", async function () {
     const stateResults = ["California", 1000, 900, 32];
 
-    expect(usElection.submitStateResult(stateResults)).to.be.revertedWith(
+    await expect(usElection.submitStateResult(stateResults)).to.be.revertedWith(
       "This state result was already submitted!"
     );
+  });
+
+  it("Should throw when trying to submit results with zero stateSeats", async function () {
+    const stateResults = ["California", 1000, 900, 0];
+
+    await expect(usElection.submitStateResult(stateResults)).to.be.revertedWith(
+      "States must have at least 1 seat"
+    );
+  });
+
+  it("Should throw when trying to submit results with a tie", async function () {
+    const stateResults = ["California", 1000, 1000, 12];
+
+    await expect(usElection.submitStateResult(stateResults)).to.be.revertedWith(
+      "There cannot be a tie"
+    );
+  });
+
+  it("Should throw on trying to submit state results when the user is not the owner", async function () {
+    const [owner, addr1] = await ethers.getSigners();
+    const stateResults = ["California", 1000, 900, 0];
+    
+    await expect(usElection.connect(addr1).submitStateResult(stateResults)).to.be.revertedWith('Not invoked by the owner');
+  });
+
+  it("Should throw on trying to end election when the user is not the owner", async function () {
+    const [owner, addr1] = await ethers.getSigners();
+    
+    await expect(usElection.connect(addr1).endElection()).to.be.revertedWith('Not invoked by the owner');
+    expect(await usElection.electionEnded()).to.equal(false); // Not Ended
   });
 
   it("Should submit state results and get current leader", async function () {
@@ -65,5 +94,15 @@ describe("USElection", function () {
     expect(await usElection.electionEnded()).to.equal(true); // Ended
   });
 
-  //TODO: ADD YOUR TESTS
+  it("Should throw on trying to submit state results when election is ended", async function () {
+    const stateResults = ["Texas", 1000, 900, 10];
+
+    await expect(usElection.submitStateResult(stateResults)).to.be.revertedWith(
+      "The election has ended already"
+    );
+  });
+
+  it("Should throw on trying to end election more than once", async function () {
+    await expect(usElection.endElection()).to.be.revertedWith("The election has ended already");
+  });
 });
