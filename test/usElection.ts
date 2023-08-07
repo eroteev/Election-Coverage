@@ -1,5 +1,5 @@
-import { USElection__factory } from "./../typechain-types/factories/Election.sol/USElection__factory";
-import { USElection } from "./../typechain-types/Election.sol/USElection";
+import { USElection__factory } from "../typechain-types/factories/Election.sol/USElection__factory";
+import { USElection } from "../typechain-types/Election.sol/USElection";
 import { expect } from "chai";
 import { ethers } from "hardhat";
 
