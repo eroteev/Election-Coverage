@@ -37,7 +37,7 @@ describe("USElection", function () {
   it("Should throw when try to submit already submitted state results", async function () {
     const stateResults = ["California", 1000, 900, 32];
 
-    expect(usElection.submitStateResult(stateResults)).to.be.revertedWith(
+    await expect(usElection.submitStateResult(stateResults)).to.be.revertedWith(
       "This state result was already submitted!"
     );
   });
@@ -45,7 +45,7 @@ describe("USElection", function () {
   it("Should throw when trying to submit results with zero stateSeats", async function () {
     const stateResults = ["California", 1000, 900, 0];
 
-    expect(usElection.submitStateResult(stateResults)).to.be.revertedWith(
+    await expect(usElection.submitStateResult(stateResults)).to.be.revertedWith(
       "States must have at least 1 seat"
     );
   });
@@ -53,23 +53,23 @@ describe("USElection", function () {
   it("Should throw when trying to submit results with a tie", async function () {
     const stateResults = ["California", 1000, 1000, 12];
 
-    expect(usElection.submitStateResult(stateResults)).to.be.revertedWith(
+    await expect(usElection.submitStateResult(stateResults)).to.be.revertedWith(
       "There cannot be a tie"
     );
-  });
-
-  it("Should throw on trying to end election with not the owner", async function () {
-    const [owner, addr1] = await ethers.getSigners();
-    
-    expect(usElection.connect(addr1).endElection()).to.be.revertedWith('Ownable: caller is not the owner');
-    expect(await usElection.electionEnded()).to.equal(false); // Not Ended
   });
 
   it("Should throw on trying to submit state results when the user is not the owner", async function () {
     const [owner, addr1] = await ethers.getSigners();
     const stateResults = ["California", 1000, 900, 0];
     
-    expect(usElection.connect(addr1).submitStateResult(stateResults)).to.be.revertedWith('Ownable: caller is not the owner');
+    await expect(usElection.connect(addr1).submitStateResult(stateResults)).to.be.revertedWith('Not invoked by the owner');
+  });
+
+  it("Should throw on trying to end election when the user is not the owner", async function () {
+    const [owner, addr1] = await ethers.getSigners();
+    
+    await expect(usElection.connect(addr1).endElection()).to.be.revertedWith('Not invoked by the owner');
+    expect(await usElection.electionEnded()).to.equal(false); // Not Ended
   });
 
   it("Should submit state results and get current leader", async function () {
@@ -92,5 +92,13 @@ describe("USElection", function () {
     expect(await usElection.currentLeader()).to.equal(2); // TRUMP
 
     expect(await usElection.electionEnded()).to.equal(true); // Ended
+  });
+
+  it("Should throw on trying to submit state results when election is ended", async function () {
+    const stateResults = ["Texas", 1000, 900, 10];
+
+    await expect(usElection.submitStateResult(stateResults)).to.be.revertedWith(
+      "The election has ended already"
+    );
   });
 });
